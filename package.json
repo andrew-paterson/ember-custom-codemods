@@ -1,0 +1,23 @@
+{
+  "name": "ember-no-implicit-this",
+  "version": "1.0.0",
+  "description": "",
+  "main": "create-components-map.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/andrew-paterson/ember-no-implicit-this.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/andrew-paterson/ember-no-implicit-this/issues"
+  },
+  "homepage": "https://github.com/andrew-paterson/ember-no-implicit-this#readme",
+  "dependencies": {
+    "chalk": "^4.1.2",
+    "node-sundries": "0.0.8"
+  }
+}
