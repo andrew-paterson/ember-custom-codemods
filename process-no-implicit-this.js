@@ -36,9 +36,9 @@ module.exports = function (pathToProject, componentsMap, namedArgs, noImplicitTh
       errorHbs.lineShift = {};
       errorHbs.errors.forEach((error) => {
         if (componentMapItem.jsProps.indexOf(error.source.split('.')[0]) > -1) {
-          updatedHbsContent = insertStringAtPosition(updatedHbsContent, error, 'this.', errorHbs.lineShift);
+          updatedHbsContent = insertStringAtPosition(updatedHbsContent, error, 'this.', errorHbs);
         } else if (namedArgs.indexOf(`@${error.source.split('.')[0]}`) > -1) {
-          updatedHbsContent = insertStringAtPosition(updatedHbsContent, error, '@', errorHbs.lineShift);
+          updatedHbsContent = insertStringAtPosition(updatedHbsContent, error, '@', errorHbs);
         } else {
           // console.log(error.source.split('.')[0]);
         }
@@ -73,13 +73,15 @@ module.exports = function (pathToProject, componentsMap, namedArgs, noImplicitTh
       .replace(/computed.reads/g, 'computed')
       .replace(/computed.equal/g, 'computed')
       .replace(/computed.filterBy/g, 'computed')
-      .split('\n');
+      .split('\n')
+      .filter((line) => !line.trim().startsWith('//'));
     lines.pop();
     lines.push('}');
     const functionDefs = `function computed() { return; }
     function service() { return; }
     function alias() { return; }
     function sort() { return; }
+    function oneWay() { return; }
     const customValidators = {};
     const config = {gReCaptcha: {}};`;
     const objString = `${functionDefs}\nmodule.exports = ${lines.join('\n')}`;
@@ -89,7 +91,7 @@ module.exports = function (pathToProject, componentsMap, namedArgs, noImplicitTh
     } catch (err) {
       console.log(chalk.yellow(file));
       console.log(chalk.red(err));
-      console.log(objString);
+      // console.log(objString);
     }
     for (const key in obj) {
       fileProps.push(key);
@@ -97,9 +99,9 @@ module.exports = function (pathToProject, componentsMap, namedArgs, noImplicitTh
     return fileProps;
   }
 
-  function insertStringAtPosition(multiLineString, error, stringToInsert, lineShift) {
+  function insertStringAtPosition(multiLineString, error, stringToInsert, errorHbs) {
     const lineNumber = error.line;
-    const columnNumber = error.column + 1 + (lineShift[lineNumber] || 0);
+    const columnNumber = error.column + 1;
     const lines = multiLineString.split('\n');
 
     if (lineNumber <= 0 || lineNumber > lines.length) {
@@ -116,9 +118,22 @@ module.exports = function (pathToProject, componentsMap, namedArgs, noImplicitTh
 
     const prefix = line.substring(0, columnNumber - 1);
     const suffix = line.substring(columnNumber - 1);
+    if (!suffix.startsWith(stringToInsert)) {
+      lines[lineNumber - 1] = prefix + stringToInsert + suffix;
+    }
+    shiftColumns(error, errorHbs, stringToInsert);
 
-    lines[lineNumber - 1] = prefix + stringToInsert + suffix;
-    lineShift[lineNumber] = stringToInsert.length;
     return lines.join('\n');
   }
 };
+
+function shiftColumns(error, errorHbs, insertedString) {
+  const sameLine = errorHbs.errors.filter((item) => {
+    return item.line === error.line;
+  });
+  sameLine.forEach((item) => {
+    if (item.column > error.column) {
+      item.column += insertedString.length;
+    }
+  });
+}
