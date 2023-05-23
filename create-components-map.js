@@ -5,18 +5,19 @@ const path = require('path');
 module.exports = function (pathToProject) {
   const resolvedPathToProject = path.resolve(process.cwd(), pathToProject);
   const hbsFiles = nodeSundries.getFiles(resolvedPathToProject, { exclude: ['node_modules', 'dummy', 'dist', 'node-utils', 'trash'] }).filter((file) => path.extname(file) === '.hbs');
-  const jsFiles = nodeSundries.getFiles(resolvedPathToProject, { exclude: ['node_modules', 'dummy', 'dist', 'node-utils', 'trash'] }).filter((file) => path.extname(file) === '.js');
+  const jsFiles = nodeSundries.getFiles(resolvedPathToProject.replace('templates/', ''), { exclude: ['node_modules', 'dummy', 'dist', 'node-utils', 'trash'] }).filter((file) => path.extname(file) === '.js');
   return hbsFiles.map((file) => {
-    const relativeFilePath = file.replace(pathToProject, '');
+    const projectNameSpace = file.indexOf('/addon/') > -1 ? 'addon ' : 'app';
+    const relativeFilePath = file.split(`/${projectNameSpace}`)[1];
     const obj = {
       template: relativeFilePath,
-      js: findJS(relativeFilePath.replace('.hbs', ''), jsFiles, pathToProject),
+      js: findJS(relativeFilePath.replace('.hbs', ''), jsFiles, pathToProject, projectNameSpace),
     };
     return obj;
   });
 };
 
-function findJS(filePath, jsFiles, pathToProject) {
+function findJS(filePath, jsFiles, pathToProject, projectNameSpace) {
   let jsFileMatches = [];
   jsFiles.forEach((file) => {
     const contents = fs.readFileSync(file, 'utf-8');
@@ -27,7 +28,7 @@ function findJS(filePath, jsFiles, pathToProject) {
     const layoutPath = `${layoutLine.split(' from ')[1].replace(';', '').replace("'", '').replace("'", '').split('templates/')[1]}`;
     if (filePath.endsWith(layoutPath)) {
       jsFileMatches.push(file);
-      const extendedFiles = findExtended(file, [], pathToProject);
+      const extendedFiles = findExtended(file, [], pathToProject, projectNameSpace);
       if (extendedFiles.length > 0) {
         jsFileMatches = jsFileMatches.concat(extendedFiles);
       }
@@ -36,7 +37,7 @@ function findJS(filePath, jsFiles, pathToProject) {
   return jsFileMatches;
 }
 
-function findExtended(jsFile, extendedFiles, pathToProject) {
+function findExtended(jsFile, extendedFiles, pathToProject, projectNameSpace) {
   const contents = fs.readFileSync(jsFile, 'utf-8');
   const extendedLine = contents.split('\n').find((line) => line.match(/export default (.*?).extend/));
 
@@ -56,7 +57,7 @@ function findExtended(jsFile, extendedFiles, pathToProject) {
   if (importLine.indexOf(projectBaseName) === -1) {
     return extendedFiles;
   }
-  const extendedFile = `${pathToProject}/addon/${importLine.replace(projectBaseName, '')}.js`;
+  const extendedFile = `${pathToProject}/${projectNameSpace}/${importLine.replace(projectBaseName, '')}.js`;
   extendedFiles.push(extendedFile);
   return findExtended(extendedFile, extendedFiles, pathToProject);
 }

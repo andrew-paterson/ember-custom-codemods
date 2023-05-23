@@ -20,17 +20,19 @@ module.exports = function (pathToProject, componentsMap, namedArgs, noImplicitTh
       });
     }
     errorsArray.forEach((errorHbs) => {
+      const projectNameSpace = errorHbs.filePath.startsWith('addon/') > -1 ? 'addon' : 'app';
       const componentMapItem = componentsMap.find((item) => {
-        return item.template.endsWith(errorHbs.filePath);
+        return item.template.endsWith(`/${errorHbs.filePath}`.split(`${projectNameSpace}`)[1]);
       });
       if (!componentMapItem) {
         return;
       }
+      // console.log(componentMapItem);
       const jsProps = componentMapItem.js.reduce((acc, jsFile) => {
         return acc.concat(collectFileProps(jsFile));
       }, []);
       componentMapItem.jsProps = jsProps;
-      const filePath = path.resolve(pathToProject, errorHbs.filePath);
+      const filePath = path.resolve(pathToProject.split(`${projectNameSpace}`)[0], errorHbs.filePath);
       const hbsContents = fs.readFileSync(filePath, 'utf-8');
       let updatedHbsContent = hbsContents;
       errorHbs.lineShift = {};
@@ -41,8 +43,10 @@ module.exports = function (pathToProject, componentsMap, namedArgs, noImplicitTh
           updatedHbsContent = insertStringAtPosition(updatedHbsContent, error, '@', errorHbs);
         } else {
           // console.log(error.source.split('.')[0]);
+          updatedHbsContent = insertStringAtPosition(updatedHbsContent, error, '@', errorHbs);
         }
       });
+      // console.log(filePath);
       fs.writeFileSync(filePath, updatedHbsContent);
       console.log(chalk.green('Updated:'), errorHbs.filePath);
     });
@@ -53,10 +57,17 @@ module.exports = function (pathToProject, componentsMap, namedArgs, noImplicitTh
   function collectFileProps(file) {
     const fileProps = [];
     const contents = fs.readFileSync(file, 'utf-8');
-    const setMatches = contents.match(/this\.set\(\s*'(.*?)'/g);
+    const setMatches = contents.match(/\w+\.set\(\s*'(.*?)'/g);
     if (setMatches) {
       setMatches.forEach((result) => {
-        fileProps.push(result.match(/this\.set\(\s*'(.*?)'/)[1]);
+        fileProps.push(result.match(/\w+\.set\(\s*'(.*?)'/)[1]);
+      });
+    }
+
+    const togglepropertyMatches = contents.match(/\w+\.toggleProperty\(\s*'(.*?)'/g);
+    if (togglepropertyMatches) {
+      togglepropertyMatches.forEach((result) => {
+        fileProps.push(result.match(/\w+\.toggleProperty\(\s*'(.*?)'/)[1]);
       });
     }
     const thisDotEqualsMatches = contents.match(/this\.(.*?)\s*=/g);

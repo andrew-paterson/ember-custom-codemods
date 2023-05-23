@@ -13,9 +13,8 @@ module.exports = function (projectPaths) {
       const hasEqual = lines.filter((line) => line.indexOf('=') > -1).map((line) => line.trim());
       hasEqual.forEach((line) => {
         const lineParts = line.split(' ').filter((linePart) => linePart.indexOf('=') > -1);
-
         lineParts.forEach((linePart) => {
-          let prop = line.split('=')[0].trim();
+          let prop = linePart.split('=')[0].trim();
           if (prop.indexOf(' ') > -1) {
             prop = prop.split(' ')[1];
           }
