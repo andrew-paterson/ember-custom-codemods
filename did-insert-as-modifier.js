@@ -2,6 +2,7 @@ const fs = require('fs');
 const chalk = require('chalk');
 const nodeSundries = require('node-sundries');
 const path = require('path');
+const findHbsFromJs = require('./lib/find-hbs-from-js');
 const filesWithDidInsert = [];
 
 module.exports = function (pathToProject) {
@@ -60,8 +61,9 @@ module.exports = function (pathToProject) {
       .join('\n')
       .replace(didInsertElementLines.join('\n'), '')
       .replace(/\n\s*\n/g, '\n\n');
-    console.log(string);
-    console.log('-----------------');
+    // console.log(string);
+    // console.log('-----------------');
+    console.log(findHbsFromJs(file.filePath, file.contents));
   });
 };
 
