@@ -10,6 +10,7 @@ module.exports = function (pathToProject, services) {
   const jsFiles = files.filter((file) => file.endsWith('.js') && (file.indexOf('/addon/') > -1 || file.indexOf('/app/') > -1));
 
   for (const targetName of services) {
+    console.log(chalk.blue(targetName));
     const jsFilesWithService = jsFiles.filter((file) => {
       const contents = fs.readFileSync(file, 'utf-8');
       const regex = new RegExp(`.${targetName}[.;\n]`);
@@ -23,9 +24,16 @@ module.exports = function (pathToProject, services) {
     });
 
     hbsWithTargetService.forEach((hbsFile) => {
-      jsFilesWithService.push(findRelatedJsFiles(hbsFile, jsFiles, pathToProject)[0]);
+      const relatedJsFiles = findRelatedJsFiles(hbsFile, jsFiles, pathToProject);
+      if (!relatedJsFiles.length) {
+        console.log(chalk.red(`No related JS files found for ${hbsFile}`));
+      }
+      jsFilesWithService.push(relatedJsFiles[0]);
     });
     jsFilesWithService.forEach((file) => {
+      if (!file) {
+        return;
+      }
       let contents = fs.readFileSync(file, 'utf-8');
       let lines = contents.split('\n');
       let additionsMade;
@@ -53,7 +61,6 @@ module.exports = function (pathToProject, services) {
         fs.writeFileSync(file, lines.join('\n'));
         console.log(chalk.green(`Added ${targetName} service to ${file}`));
       }
-      // console.log(lines.join('\n'));
     });
   }
 };

@@ -8,7 +8,7 @@ Uses a JSON list of no-implicit this template errors, all referring to propertie
 
 # Overview
 
-First determines if a property should have the prefix `.this`. Use the components map passed as the second argument to find all of the JavaScript files which back the template in question. The `.thios` prefix is applied if any ofn the following are found in any of the JavaScript files backing the template:
+First determines if a property should have the prefix `.this`. Use the components map passed as the second argument to find all of the JavaScript files which back the template in question. The `.this` prefix is applied if any ofn the following are found in any of the JavaScript files backing the template:
 
 - any instances of a computed propery with the same name as the property in question.
 - any instances of `x.set('property, ***)` in reference to the property in question.
@@ -29,13 +29,13 @@ Note- ensure that nothing is extended. Example below.
 module.exports = {
   rules: {
     'no-implicit-this': {
-      allow: [], // Relative paths to all helpers int he ember project, relative to either the addon or app dir.
+      allow: [], // Relative paths to all helpers in the ember project, relative to either the addon or app dir.
     },
   },
 };
 ```
 
-[ Optional] Update .prewttierrc so that the singleQuote rule is not applied to `.hbs` files. Example below.
+[ Optional] Update .prettierrc so that the singleQuote rule is not applied to `.hbs` files. Example below.
 
 ```
 module.exports = {
@@ -54,7 +54,7 @@ module.exports = {
 Add these two lines to the `scripts` object ion `package.json`.
 
 `"format:hbs": "prettier **/*.hbs --write",` // Optional
-`"lint_implicit_this:hbs": "ember-template-lint ./addon/templates --config-path .template-lintrc.js --format=json",`
+`"lint_implicit_this:hbs": "ember-template-lint ./**/templates --config-path .template-lintrc.js --format=json",`
 
 Then in the terminal
 

@@ -20,14 +20,14 @@ module.exports = function (pathToProject, componentsMap, namedArgs, noImplicitTh
       });
     }
     errorsArray.forEach((errorHbs) => {
-      const projectNameSpace = errorHbs.filePath.startsWith('addon/') > -1 ? 'addon' : 'app';
+      const projectNameSpace = errorHbs.filePath.startsWith('addon/') ? 'addon' : 'app';
       const componentMapItem = componentsMap.find((item) => {
         return item.template.endsWith(`/${errorHbs.filePath}`.split(`${projectNameSpace}`)[1]);
       });
       if (!componentMapItem) {
+        console.log(chalk.red('ComponentMap item not found:'), errorHbs.filePath);
         return;
       }
-      // console.log(componentMapItem);
       const jsProps = componentMapItem.js.reduce((acc, jsFile) => {
         return acc.concat(collectFileProps(jsFile));
       }, []);
@@ -37,16 +37,16 @@ module.exports = function (pathToProject, componentsMap, namedArgs, noImplicitTh
       let updatedHbsContent = hbsContents;
       errorHbs.lineShift = {};
       errorHbs.errors.forEach((error) => {
-        if (componentMapItem.jsProps.indexOf(error.source.split('.')[0]) > -1) {
+        if (errorHbs.filePath.indexOf('/components/') === -1) {
+          updatedHbsContent = insertStringAtPosition(updatedHbsContent, error, 'this.', errorHbs);
+        } else if (componentMapItem.jsProps.indexOf(error.source.split('.')[0]) > -1) {
           updatedHbsContent = insertStringAtPosition(updatedHbsContent, error, 'this.', errorHbs);
         } else if (namedArgs.indexOf(`@${error.source.split('.')[0]}`) > -1) {
           updatedHbsContent = insertStringAtPosition(updatedHbsContent, error, '@', errorHbs);
         } else {
-          // console.log(error.source.split('.')[0]);
           updatedHbsContent = insertStringAtPosition(updatedHbsContent, error, '@', errorHbs);
         }
       });
-      // console.log(filePath);
       fs.writeFileSync(filePath, updatedHbsContent);
       console.log(chalk.green('Updated:'), errorHbs.filePath);
     });
