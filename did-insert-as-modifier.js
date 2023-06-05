@@ -11,7 +11,7 @@ module.exports = function (pathToProject) {
     .filter((file) => file.indexOf('/components/') > -1)
     .forEach((file) => {
       const contents = fs.readFileSync(file, 'utf-8');
-      if (contents.indexOf('didInsertElement') > -1) {
+      if (contents.indexOf('didInsertElement') > -1 && contents.indexOf('// didInsertElement') === -1) {
         filesWithDidInsert.push({
           filePath: file,
           contents: contents,
@@ -47,7 +47,7 @@ module.exports = function (pathToProject) {
       });
     if (file.contents.indexOf('actions:') === -1) {
       const lastLineIndex = lines.indexOf('});');
-      const actionsLines = ['  actions: {', '  },'];
+      const actionsLines = ['\n', '  actions: {', '  },'];
       lines = insertArrayAt(lines, lastLineIndex, actionsLines);
       console.log(chalk.blue(`Actions hash added to ${file.filePath}`));
     } else {
@@ -57,13 +57,32 @@ module.exports = function (pathToProject) {
     lines = insertArrayAt(lines, actionsLineIndex + 1, didInsertParsed);
 
     console.log(chalk.magenta(file.filePath));
-    let string = lines
+    const jsFinal = lines
       .join('\n')
       .replace(didInsertElementLines.join('\n'), '')
       .replace(/\n\s*\n/g, '\n\n');
-    // console.log(string);
-    // console.log('-----------------');
-    console.log(findHbsFromJs(file.filePath, file.contents));
+    fs.writeFileSync(file.filePath, jsFinal);
+    console.log(chalk.green(`JS updated for ${file.filePath}`));
+    const hbsPath = findHbsFromJs(pathToProject, file.filePath, file.contents);
+    if (fs.existsSync(hbsPath)) {
+      let hbsContents = fs.readFileSync(hbsPath, 'utf-8');
+      const hbsLines = hbsContents.split('\n');
+      if (!hbsLines[0].match(/<\w+[ >]*/)) {
+        console.log(chalk.red(`Skipping HBS update for ${file.filePath} as it may start with a helper. Search HBS files for {{! manual did insert }}.`));
+        hbsLines.push('{{! manual did insert }}');
+        hbsContents = hbsLines.join('\n');
+      } else {
+        if (hbsContents.indexOf('...attributes') > -1) {
+          hbsContents = hbsContents.replace('...attributes', ' {{did-insert (action "didInsert")}} ...attributes');
+        } else {
+          hbsContents = hbsContents.replace('>', ' {{did-insert (action "didInsert")}}>');
+        }
+      }
+      fs.writeFileSync(hbsPath, hbsContents);
+      console.log(chalk.green(`HBS updated for ${hbsPath}`));
+    } else {
+      console.log(chalk.red(`No corresponding HBS file for ${file.filePath}`));
+    }
   });
 };
 
