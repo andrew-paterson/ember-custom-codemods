@@ -1,5 +1,5 @@
 {
-  "name": "ember-no-implicit-this",
+  "name": "ember-custom-codemods",
   "version": "1.0.0",
   "description": "",
   "main": "create-components-map.js",

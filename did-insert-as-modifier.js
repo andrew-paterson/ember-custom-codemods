@@ -18,9 +18,7 @@ module.exports = function (pathToProject) {
         });
       }
     });
-  // const projectNameSpace =
 
-  console.log(filesWithDidInsert.length);
   filesWithDidInsert.forEach((file) => {
     const didInsertElementLines = [];
     let isInDidInsertFunction = false;
