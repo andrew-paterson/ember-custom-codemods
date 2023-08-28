@@ -33,7 +33,6 @@ function createRegex(ignoreProps) {
 
 module.exports = function (pathToProject, opts) {
   const regex = createRegex(opts.ignoreProps || []);
-  console.log(regex);
   if (fs.statSync(pathToProject).isDirectory()) {
     nodeSundries.getFiles(pathToProject, { exclude: ['node_modules', 'dummy', 'dist', 'node-utils', 'trash', 'templates', '.git', 'tests', 'addon-test-support'] }).forEach((file) => {
       const contents = fs.readFileSync(file, 'utf-8');
